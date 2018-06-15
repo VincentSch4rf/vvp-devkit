@@ -71,12 +71,17 @@ Reboot coreos
 After rebooting, once again login to the coreos box.
 Wait (about 15 min) for all of the docker containers and services to become fully up and ready.
 You can monitor the syslogs using the command "journalctl -xef". Wait for activity in the syslogs to die down for a few minutes.
+It's usually ready to go as soon as it repeatedly shows something like:
+
+Jun 15 09:38:43 coreos-01 kubelet-wrapper[883]: W0615 09:38:43.577543     883 helpers.go:793] eviction manager: no observation found for eviction signal allocatableNodeFs.available
+Jun 15 09:38:53 coreos-01 kubelet-wrapper[883]: W0615 09:38:53.607446     883 helpers.go:793] eviction manager: no observation found for eviction signal allocatableNodeFs.available
 
 Exit the ssh session and install kubectl on your host machine if you haven't already.
-You can check if everything works with the following command:
-$ kubectl version
-The output should be somewhat similar to the following:
+Run "kubectl version" to check if kubectl can establish a connection.
+The output should be somewhat similar to this:
 
+Client Version: version.Info{Major:"1", Minor:"10", GitVersion:"v1.10.4", GitCommit:"5ca598b4ba5abb89bb773071ce452e33fb66339d", GitTreeState:"clean", BuildDate:"2018-06-06T08:13:03Z", GoVersion:"go1.9.3", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"7+", GitVersion:"v1.7.16+coreos.0", GitCommit:"8daba243261316d9d15de0db88ac286e5ba1e09e", GitTreeState:"clean", BuildDate:"2018-04-06T16:06:15Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
 
 Then run the following command:
 $ bin/vvp-deploy
