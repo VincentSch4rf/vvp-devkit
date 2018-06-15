@@ -7,18 +7,39 @@ Versions displayed below are required except for the OS
 Ansible :      2.2.1.0
 Vagrant :      1.9.4
 VirtualBox:    5.1.14
-OS:            OS X 10.13.3
+kubectl:       1.10.0+
+OS:            OS X 10.13.3 / Debian 9.4
 
-If you are using kubectl version 1.10.0, you will need to change the
-k8s_version to "v1.7.16_coreos.0" in zones/development/inventory/group_vars/bootstrap.yml
 
+## Getting the required packages (Debian only) ##
+
+The following commands should get everything set up:
+
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt update -y
+apt install -y build-essential linux-headers-$(uname -r) apt-transport-https dkms ansible git kubectl
+wget https://download.virtualbox.org/virtualbox/5.1.38/virtualbox-5.1_5.1.38-122592~Debian~stretch_amd64.deb
+dpkg -i virtualbox-5.1_5.1.38-122592~Debian~stretch_amd64.deb
+apt-get install -f -y
+/sbin/vboxconfig #If this fails, make sure you got the correct linux-headers and reboot
+wget https://releases.hashicorp.com/vagrant/1.9.4/vagrant_1.9.4_x86_64.deb
+dpkg -i vagrant_1.9.4_x86_64.deb
+mkdir -p /opt/vvp
+cd /opt/vvp
+git clone https://github.com/nacho3c/vvp-devkit devkit
+cd devkit
+chmod +x ./setenv
+ 
 ## Installation ##
 
 Add the following line into your local hosts file:
 10.252.0.12 coreos-01.development.vvp.example.com
 
 Select the required environment from the list when requested:
-$ . ./setenv
+$ ./setenv
 
 install the vvp custom box:
 $ bin/vvp-install-box
@@ -26,22 +47,24 @@ $ bin/vvp-install-box
 start the infrastructure deployment 
 $ vagrant up
 
-Login to the coreos box quickly after provisioning has finished, 
-wait for the VM to reboot automatically for the first time.
+Wait for vagrant to finish, then ssh into the coreos-01 vm.
+You can watch the status of the coreos installation with:
+watch -n10 "ps ax | grep coreos-install"
+As soon as it finishes, the machine will reboot.
 
-After the reboot, perform the following manual steps on coreos
-Create the file:
-/etc/systemd/network/static.network
+After the reboot, run the following commands on the coreos machine:
 
-with contents:
+$ sudo tee -a /etc/systemd/network/static.network << 'EOF'
 [Match]
 Name=eth1
 
 [Network]
 Address=10.252.0.12
+EOF
 
-Add the following line to the bottom of /etc/hosts
+$ sudo tee -a /etc/hosts << 'EOF'
 10.252.0.12 coreos-01.development.vvp.example.com
+EOF
 
 Reboot coreos
 
@@ -49,7 +72,13 @@ After rebooting, once again login to the coreos box.
 Wait (about 15 min) for all of the docker containers and services to become fully up and ready.
 You can monitor the syslogs using the command "journalctl -xef". Wait for activity in the syslogs to die down for a few minutes.
 
-Run command
+Exit the ssh session and install kubectl on your host machine if you haven't already.
+You can check if everything works with the following command:
+$ kubectl version
+The output should be somewhat similar to the following:
+
+
+Then run the following command:
 $ bin/vvp-deploy
 
 After the above deploy, it can take around 30 minutes for everything to finish.
