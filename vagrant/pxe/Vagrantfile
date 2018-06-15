@@ -41,6 +41,13 @@
 require_relative 'lib/vagrant_provision.rb'
 require 'yaml'
 
+# Workaround for Vagrant versions <= 2.0.2 where Vagrant tries
+# to access atlas.hashicorp.com, resulting in a 404 error.
+# The new/replacement url is vagrantcloud.com
+if Vagrant::DEFAULT_SERVER_URL == "atlas.hashicorp.com"
+  Vagrant::DEFAULT_SERVER_URL.replace('https://vagrantcloud.com')
+end
+
 Vagrant.require_version ">= 1.6.0"
 if ENV["VVP_DEVKIT"].nil? or ENV["VVP_DEVKIT"].downcase == "single"
   yaml_conf = YAML.load_file(File.join(File.dirname(__FILE__),'single_node_config.yml'))
